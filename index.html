@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Modulo Intervento</title>
+  <title>Modulo Intervento - Wizard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -33,43 +33,102 @@
     .signature-section {
       margin-top: 1em;
     }
+    .step {
+      display: none;
+    }
+    .step.active {
+      display: block;
+    }
+    .buttons {
+      margin-top: 1em;
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body>
   <h1>Modulo Intervento</h1>
   <form id="intervention-form">
-    <label>Denominazione Cliente:
-      <input type="text" name="cliente" required />
-    </label>
-    <label>Email Cliente:
-      <input type="email" name="email_cliente" required />
-    </label>
-    <label>Data:
-      <input type="date" name="data" required />
-    </label>
-    <label>Tipologia Intervento:
-      <input type="text" name="tipologia" required />
-    </label>
-    <label>Note:
-      <textarea name="note"></textarea>
-    </label>
-
-    <div class="signature-section">
-      <label>Firma Tecnico:</label>
-      <canvas id="firmaTecnico"></canvas>
-      <button type="button" onclick="clearCanvas('firmaTecnico')">Cancella Firma Tecnico</button>
+    <!-- Step 1 -->
+    <div class="step active" id="step-1">
+      <label>Denominazione Cliente:
+        <input type="text" name="cliente" required />
+      </label>
+      <label>Email Cliente:
+        <input type="email" name="email_cliente" required />
+      </label>
+      <label>Data:
+        <input type="date" name="data" required />
+      </label>
     </div>
 
-    <div class="signature-section">
-      <label>Firma Cliente:</label>
-      <canvas id="firmaCliente"></canvas>
-      <button type="button" onclick="clearCanvas('firmaCliente')">Cancella Firma Cliente</button>
+    <!-- Step 2 -->
+    <div class="step" id="step-2">
+      <label>Tipologia Intervento:
+        <input type="text" name="tipologia" required />
+      </label>
+      <label>Note:
+        <textarea name="note"></textarea>
+      </label>
     </div>
 
-    <button type="submit">Invia</button>
+    <!-- Step 3 -->
+    <div class="step" id="step-3">
+      <div class="signature-section">
+        <label>Firma Tecnico:</label>
+        <canvas id="firmaTecnico"></canvas>
+        <button type="button" onclick="clearCanvas('firmaTecnico')">Cancella Firma Tecnico</button>
+      </div>
+      <div class="signature-section">
+        <label>Firma Cliente:</label>
+        <canvas id="firmaCliente"></canvas>
+        <button type="button" onclick="clearCanvas('firmaCliente')">Cancella Firma Cliente</button>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step" id="step-4">
+      <p><strong>Riepilogo finale</strong></p>
+      <p>Conferma l'invio del modulo compilato.</p>
+    </div>
+
+    <div class="buttons">
+      <button type="button" id="prevBtn">Indietro</button>
+      <button type="button" id="nextBtn">Avanti</button>
+    </div>
+    <button type="submit" id="submitBtn" style="display: none;">Invia</button>
   </form>
 
   <script>
+    let currentStep = 0;
+    const steps = document.querySelectorAll(".step");
+    const nextBtn = document.getElementById("nextBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function showStep(n) {
+      steps.forEach((step, i) => step.classList.toggle("active", i === n));
+      prevBtn.style.display = n > 0 ? "inline-block" : "none";
+      nextBtn.style.display = n < steps.length - 1 ? "inline-block" : "none";
+      submitBtn.style.display = n === steps.length - 1 ? "inline-block" : "none";
+    }
+
+    nextBtn.addEventListener("click", () => {
+      if (currentStep < steps.length - 1) {
+        currentStep++;
+        showStep(currentStep);
+      }
+    });
+
+    prevBtn.addEventListener("click", () => {
+      if (currentStep > 0) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    });
+
+    showStep(currentStep);
+
     function setupSignatureCanvas(id) {
       const canvas = document.getElementById(id);
       const ctx = canvas.getContext('2d');
@@ -99,7 +158,7 @@
 
     document.getElementById('intervention-form').addEventListener('submit', function(e) {
       e.preventDefault();
-      alert("Modulo compilato. Funzionalità di invio email e PDF verranno aggiunte in seguito.");
+      alert("Modulo inviato! Funzioni PDF e email saranno aggiunte successivamente.");
     });
   </script>
 </body>
