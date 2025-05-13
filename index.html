@@ -29,6 +29,7 @@
       border: 1px solid #ccc;
       width: 100%;
       height: 150px;
+      touch-action: none;
     }
     .signature-section {
       margin-top: 1em;
@@ -134,15 +135,52 @@
       const ctx = canvas.getContext('2d');
       let drawing = false;
 
-      canvas.addEventListener('mousedown', () => drawing = true);
+      function getPos(e, isTouch = false) {
+        const rect = canvas.getBoundingClientRect();
+        if (isTouch) {
+          return {
+            x: e.touches[0].clientX - rect.left,
+            y: e.touches[0].clientY - rect.top
+          };
+        } else {
+          return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+          };
+        }
+      }
+
+      canvas.addEventListener('mousedown', (e) => {
+        drawing = true;
+        const pos = getPos(e);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      });
+
       canvas.addEventListener('mouseup', () => drawing = false);
       canvas.addEventListener('mouseout', () => drawing = false);
       canvas.addEventListener('mousemove', (e) => {
         if (!drawing) return;
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        ctx.lineTo(x, y);
+        const pos = getPos(e);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+      });
+
+      canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        drawing = true;
+        const pos = getPos(e, true);
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      });
+
+      canvas.addEventListener('touchend', () => drawing = false);
+      canvas.addEventListener('touchcancel', () => drawing = false);
+      canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (!drawing) return;
+        const pos = getPos(e, true);
+        ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
       });
     }
