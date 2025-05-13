@@ -20,7 +20,7 @@
       display: block;
       margin-top: 1em;
     }
-    input, textarea, button {
+    input, textarea, button, datalist, select {
       width: 100%;
       padding: 0.5em;
       margin-top: 0.2em;
@@ -45,6 +45,12 @@
       display: flex;
       justify-content: space-between;
     }
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5em;
+      margin-top: 0.5em;
+    }
   </style>
 </head>
 <body>
@@ -53,10 +59,11 @@
     <!-- Step 1 -->
     <div class="step active" id="step-1">
       <label>Denominazione Cliente:
-        <input type="text" name="cliente" required />
+        <input type="text" name="cliente" id="cliente" list="clienti-list" required />
+        <datalist id="clienti-list"></datalist>
       </label>
       <label>Email Cliente:
-        <input type="email" name="email_cliente" required />
+        <input type="email" name="email_cliente" id="email_cliente" required />
       </label>
       <label>Data:
         <input type="date" name="data" required />
@@ -65,9 +72,14 @@
 
     <!-- Step 2 -->
     <div class="step" id="step-2">
-      <label>Tipologia Intervento:
-        <input type="text" name="tipologia" required />
-      </label>
+      <label>Tipologia Intervento:</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" name="tipologia" value="Installazione"> Installazione</label>
+        <label><input type="checkbox" name="tipologia" value="Manutenzione"> Manutenzione</label>
+        <label><input type="checkbox" name="tipologia" value="Riparazione"> Riparazione</label>
+        <label><input type="checkbox" name="tipologia" value="Aggiornamento"> Aggiornamento</label>
+        <label><input type="checkbox" name="tipologia" value="Altro"> Altro</label>
+      </div>
       <label>Note:
         <textarea name="note"></textarea>
       </label>
@@ -90,7 +102,7 @@
     <!-- Step 4 -->
     <div class="step" id="step-4">
       <p><strong>Riepilogo finale</strong></p>
-      <p>Conferma l'invio del modulo compilato.</p>
+      <ul id="riepilogo"></ul>
     </div>
 
     <div class="buttons">
@@ -106,12 +118,62 @@
     const nextBtn = document.getElementById("nextBtn");
     const prevBtn = document.getElementById("prevBtn");
     const submitBtn = document.getElementById("submitBtn");
+    const riepilogo = document.getElementById("riepilogo");
+    let clientiData = {};
+
+    function caricaClientiCSV() {
+      fetch("elenco_clienti.csv")
+        .then(response => response.text())
+        .then(text => {
+          const lines = text.trim().split("\n");
+          const datalist = document.getElementById("clienti-list");
+          datalist.innerHTML = "";
+          for (let i = 1; i < lines.length; i++) {
+            const [nome, email] = lines[i].split(",");
+            if (nome && email) {
+              clientiData[nome.trim()] = email.trim();
+              const option = document.createElement("option");
+              option.value = nome.trim();
+              datalist.appendChild(option);
+            }
+          }
+        })
+        .catch(err => console.error("Errore caricamento clienti:", err));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      caricaClientiCSV();
+    });
+
+    document.getElementById("cliente").addEventListener("input", function(e) {
+      const nome = e.target.value;
+      if (clientiData[nome]) {
+        document.getElementById("email_cliente").value = clientiData[nome];
+      }
+    });
 
     function showStep(n) {
       steps.forEach((step, i) => step.classList.toggle("active", i === n));
       prevBtn.style.display = n > 0 ? "inline-block" : "none";
       nextBtn.style.display = n < steps.length - 1 ? "inline-block" : "none";
       submitBtn.style.display = n === steps.length - 1 ? "inline-block" : "none";
+      if (n === steps.length - 1) updateRiepilogo();
+    }
+
+    function updateRiepilogo() {
+      const cliente = document.querySelector("[name='cliente']").value;
+      const email = document.querySelector("[name='email_cliente']").value;
+      const data = document.querySelector("[name='data']").value;
+      const note = document.querySelector("[name='note']").value;
+      const tipi = [...document.querySelectorAll("input[name='tipologia']:checked")].map(cb => cb.value);
+
+      riepilogo.innerHTML = `
+        <li><strong>Cliente:</strong> ${cliente}</li>
+        <li><strong>Email:</strong> ${email}</li>
+        <li><strong>Data:</strong> ${data}</li>
+        <li><strong>Tipologia:</strong> ${tipi.join(", ")}</li>
+        <li><strong>Note:</strong> ${note}</li>
+      `;
     }
 
     nextBtn.addEventListener("click", () => {
